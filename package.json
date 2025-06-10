@@ -2,7 +2,7 @@
   "name": "@alphabite/medusa-reviews",
   "version": "0.0.1",
   "description": "Alphabite's Medusa Reviews Plugin",
-  "author": "Medusa (https://medusajs.com)",
+  "author": "Alphabite (https://alphabite.io)",
   "license": "MIT",
   "files": [
     ".medusa/server"
@@ -84,5 +84,8 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610",
+  "publishConfig": {
+    "access": "public"
+  }
 }
