@@ -35,6 +35,9 @@
     "dev": "medusa plugin:develop",
     "prepublishOnly": "medusa plugin:build"
   },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.802.0"
+  },
   "devDependencies": {
     "@medusajs/admin-sdk": "2.8.3",
     "@medusajs/cli": "2.8.3",
