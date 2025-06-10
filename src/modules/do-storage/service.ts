@@ -53,11 +53,6 @@ export default class DigitalOceanStorageModuleService {
     const bucket = process.env.DO_STORAGE_BUCKET;
     const region = process.env.DO_STORAGE_REGION;
 
-    console.log("DigitalOcean Storage configuration:", {
-      bucket,
-      region,
-    });
-
     if (!bucket || !region) {
       throw new Error("Missing DigitalOcean storage configuration.");
     }
