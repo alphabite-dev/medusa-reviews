@@ -1,6 +1,6 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
-import { PRODUCT_REVIEW_MODULE } from "../../modules/review";
-import ProductReviewModuleService from "../../modules/review/service";
+import { REVIEW_MODULE } from "../../modules/review";
+import ReviewModuleService from "../../modules/review/service";
 
 export type UpdateReviewsStepInput = {
   id: string;
@@ -10,9 +10,8 @@ export type UpdateReviewsStepInput = {
 export const updateReviewsStep = createStep(
   "update-review-step",
   async (input: UpdateReviewsStepInput, { container }) => {
-    const reviewModuleService: ProductReviewModuleService = container.resolve(
-      PRODUCT_REVIEW_MODULE
-    );
+    const reviewModuleService: ReviewModuleService =
+      container.resolve(REVIEW_MODULE);
 
     // Get original review before update
     const originalReviews = await reviewModuleService.listReviews({
@@ -28,9 +27,8 @@ export const updateReviewsStep = createStep(
       return;
     }
 
-    const reviewModuleService: ProductReviewModuleService = container.resolve(
-      PRODUCT_REVIEW_MODULE
-    );
+    const reviewModuleService: ReviewModuleService =
+      container.resolve(REVIEW_MODULE);
 
     // Restore original review status
     await reviewModuleService.updateReviews(originalData);

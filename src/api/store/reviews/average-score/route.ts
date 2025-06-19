@@ -2,8 +2,8 @@ import {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework";
-import ProductReviewModuleService from "../../../../modules/review/service";
-import { PRODUCT_REVIEW_MODULE } from "../../../../modules/review";
+import ReviewModuleService from "../../../../modules/review/service";
+import { REVIEW_MODULE } from "../../../../modules/review";
 import { MedusaError, MedusaErrorTypes } from "@medusajs/framework/utils";
 
 export const GET = async (
@@ -19,9 +19,8 @@ export const GET = async (
     );
   }
 
-  const reviewModuleService: ProductReviewModuleService = req.scope.resolve(
-    PRODUCT_REVIEW_MODULE
-  );
+  const reviewModuleService: ReviewModuleService =
+    req.scope.resolve(REVIEW_MODULE);
 
   const product_ids = productIdsString.includes(",")
     ? productIdsString.split(",")

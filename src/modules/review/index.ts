@@ -1,8 +1,8 @@
 import { Module } from "@medusajs/framework/utils";
-import ProductReviewModuleService from "./service";
+import ReviewModuleService from "./service";
 
-export const PRODUCT_REVIEW_MODULE = "productReview";
+export const REVIEW_MODULE = "review";
 
-export default Module(PRODUCT_REVIEW_MODULE, {
-  service: ProductReviewModuleService,
+export default Module(REVIEW_MODULE, {
+  service: ReviewModuleService,
 });

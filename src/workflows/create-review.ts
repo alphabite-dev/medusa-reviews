@@ -33,11 +33,11 @@ export const createReviewWorkflow = createWorkflow(
     });
 
     // Create the review
-    const review = createReviewStep(input);
+    // const review = createReviewStep(input);
 
-    // @ts-ignore
-    return new WorkflowResponse({
-      review,
-    });
+    // // @ts-ignore
+    // return new WorkflowResponse({
+    //   review,
+    // });
   }
 );

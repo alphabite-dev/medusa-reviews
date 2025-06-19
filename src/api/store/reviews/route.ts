@@ -2,51 +2,82 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http";
-import { createReviewWorkflow } from "../../../workflows/create-review";
-import { z } from "zod";
 import { DIGITAL_OCEAN_STORAGE_MODULE } from "../../../modules/do-storage";
 import DigitalOceanStorageModuleService from "../../../modules/do-storage/service";
+import { CreateReviewInput } from "./validators";
+import { Review } from "./types";
+import ReviewModuleService from "../../../modules/review/service";
+import { REVIEW_MODULE } from "../../../modules/review";
 
-export const PostStoreReviewSchema = z.object({
-  title: z.string().optional(),
-  content: z.string().optional(),
-  rating: z.preprocess((val) => {
-    if (val && typeof val === "string") {
-      return parseInt(val);
-    }
-    return val;
-  }, z.number().min(1).max(5)),
-  product_id: z.string(),
-  first_name: z.string(),
-  last_name: z.string(),
-  image_base64s: z.array(z.string()).optional(),
-});
-
-type PostStoreReviewReq = z.infer<typeof PostStoreReviewSchema>;
+//-----Create Review-----//
 
 export const POST = async (
-  req: AuthenticatedMedusaRequest<PostStoreReviewReq>,
-  res: MedusaResponse
+  req: AuthenticatedMedusaRequest<CreateReviewInput>,
+  res: MedusaResponse<Review>
 ) => {
-  const input = req.validatedBody;
+  const { image_base64s, ...input } = req.validatedBody;
+  const customer_id = req.auth_context?.actor_id;
 
-  const storageModuleService: DigitalOceanStorageModuleService =
-    req.scope.resolve(DIGITAL_OCEAN_STORAGE_MODULE);
+  const storageModuleService =
+    req.scope.resolve<DigitalOceanStorageModuleService>(
+      DIGITAL_OCEAN_STORAGE_MODULE
+    );
 
-  const uploadRes = input.image_base64s
-    ? await storageModuleService.upload({
-        base64s: input.image_base64s,
-        productId: input.product_id,
-      })
-    : [];
+  const reviewModuleService =
+    req.scope.resolve<ReviewModuleService>(REVIEW_MODULE);
 
-  const { result } = await createReviewWorkflow(req.scope).run({
-    input: {
+  try {
+    const query = req.scope.resolve("query");
+
+    const {
+      data: [customer],
+    } = await query.graph({
+      entity: "customer",
+      fields: ["first_name", "last_name"],
+      filters: {
+        id: customer_id,
+      },
+    });
+
+    // console.log("Customer:", customer);
+
+    const { data: orders } = await query.graph({
+      entity: "order",
+      fields: ["id", "customer_id", "items.product_id"],
+      filters: {
+        customer_id,
+      },
+    });
+
+    console.log("Orders for customer:", orders);
+
+    const hasOrderedProduct = orders.some((order) =>
+      order.items.some((item) => item.product_id === input.product_id)
+    );
+
+    // const uploadRes = input.image_base64s
+    //   ? await storageModuleService.upload({
+    //       base64s: input.image_base64s,
+    //       productId: input.product_id,
+    //     })
+    //   : [];
+
+    const created_review = await reviewModuleService.createReviews({
       ...input,
-      customer_id: req.auth_context?.actor_id,
-      image_urls: uploadRes.map((res) => res.url),
-    },
-  });
+      customer_id,
+      is_verified_purchase: hasOrderedProduct,
+      status: "pending",
+      image_urls: [],
+      // image_urls: uploadRes.map((res) => res.url),
+    });
 
-  res.json(result);
+    res.status(201).json({
+      ...created_review,
+      customer,
+    });
+  } catch (error) {
+    console.log("Error creating review:", error);
+
+    res.status(500).end();
+  }
 };

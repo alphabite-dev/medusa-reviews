@@ -7,7 +7,7 @@ import Review from "./models/review";
 import { Context } from "@medusajs/framework/types";
 import { EntityManager } from "@mikro-orm/knex";
 
-class ProductReviewModuleService extends MedusaService({
+class ReviewModuleService extends MedusaService({
   Review,
 }) {
   @InjectManager()
@@ -127,4 +127,4 @@ class ProductReviewModuleService extends MedusaService({
   }
 }
 
-export default ProductReviewModuleService;
+export default ReviewModuleService;

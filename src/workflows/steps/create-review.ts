@@ -1,12 +1,12 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
-import { PRODUCT_REVIEW_MODULE } from "../../modules/review";
-import ProductReviewModuleService from "../../modules/review/service";
+import { REVIEW_MODULE } from "../../modules/review";
+import ReviewModuleService from "../../modules/review/service";
 
 export type CreateReviewStepInput = {
   title?: string;
   content?: string;
   rating: number;
-  product_id: string;
+  id: string;
   customer_id?: string;
   first_name: string;
   last_name: string;
@@ -16,9 +16,8 @@ export type CreateReviewStepInput = {
 export const createReviewStep = createStep(
   "create-review",
   async (input: CreateReviewStepInput, { container }) => {
-    const reviewModuleService: ProductReviewModuleService = container.resolve(
-      PRODUCT_REVIEW_MODULE
-    );
+    const reviewModuleService: ReviewModuleService =
+      container.resolve(REVIEW_MODULE);
 
     const review = await reviewModuleService.createReviews(input);
 
@@ -29,9 +28,8 @@ export const createReviewStep = createStep(
       return;
     }
 
-    const reviewModuleService: ProductReviewModuleService = container.resolve(
-      PRODUCT_REVIEW_MODULE
-    );
+    const reviewModuleService: ReviewModuleService =
+      container.resolve(REVIEW_MODULE);
 
     await reviewModuleService.deleteReviews(reviewId);
   }
