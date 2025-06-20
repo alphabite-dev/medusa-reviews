@@ -70,7 +70,7 @@ export default defineMiddlewares({
       method: ["DELETE"],
       middlewares: [authenticate("customer", ["bearer"])],
     },
-    //----Admin get reviews-----//
+    //----Admin list reviews-----//
     {
       matcher: "/admin/reviews",
       method: ["GET"],

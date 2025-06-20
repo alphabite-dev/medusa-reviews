@@ -1,0 +1,331 @@
+{
+	"info": {
+		"_postman_id": "8da626bf-18c4-4003-bdf2-0bfd09e13034",
+		"name": "Alphabite Reviews",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45926097"
+	},
+	"item": [
+		{
+			"name": "Create Review",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "{{api_key_header}}",
+						"value": "{{publishable_api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{auth_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"New review\",\r\n    \"content\": \"Cool product!\",\r\n    \"rating\": 5,\r\n    \"product_id\": \"prod_\",\r\n    \"image_base64s\": []\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{api_url}}/store/reviews",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"store",
+						"reviews"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Reviews",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "{{api_key_header}}",
+						"value": "{{publishable_api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{api_url}}/store/products/reviews?include_product=true&fields=&rating=5&limit=5&offset=0&order=desc&sort_by=created_at",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"store",
+						"products",
+						"reviews"
+					],
+					"query": [
+						{
+							"key": "product_ids",
+							"value": "prod_01JTN8V44WSEK4JGT3DJ3X5HV5",
+							"disabled": true
+						},
+						{
+							"key": "verified_purchase_only",
+							"value": "true",
+							"disabled": true
+						},
+						{
+							"key": "include_product",
+							"value": "true"
+						},
+						{
+							"key": "fields",
+							"value": ""
+						},
+						{
+							"key": "rating",
+							"value": "5"
+						},
+						{
+							"key": "limit",
+							"value": "5"
+						},
+						{
+							"key": "offset",
+							"value": "0"
+						},
+						{
+							"key": "order",
+							"value": "desc"
+						},
+						{
+							"key": "sort_by",
+							"value": "created_at"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Product Reviews",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "{{api_key_header}}",
+						"value": "{{publishable_api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{auth_token}}",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{api_url}}/store/reviews/product/:product_id?rating=5&verified_purchase_only=true&limit=5&offset=0&order=asc&sort_by=created_at",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"store",
+						"reviews",
+						"product",
+						":product_id"
+					],
+					"query": [
+						{
+							"key": "fields",
+							"value": null,
+							"disabled": true
+						},
+						{
+							"key": "include_product",
+							"value": "true",
+							"disabled": true
+						},
+						{
+							"key": "my_reviews_only",
+							"value": "false",
+							"disabled": true
+						},
+						{
+							"key": "rating",
+							"value": "5"
+						},
+						{
+							"key": "verified_purchase_only",
+							"value": "true"
+						},
+						{
+							"key": "limit",
+							"value": "5"
+						},
+						{
+							"key": "offset",
+							"value": "0"
+						},
+						{
+							"key": "order",
+							"value": "asc"
+						},
+						{
+							"key": "sort_by",
+							"value": "created_at"
+						}
+					],
+					"variable": [
+						{
+							"key": "product_id",
+							"value": "prod_"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Aggregate Counts",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "{{api_key_header}}",
+						"value": "{{publishable_api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{auth_token}}",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{api_url}}/store/reviews/product/:product_id/aggregate-counts",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"store",
+						"reviews",
+						"product",
+						":product_id",
+						"aggregate-counts"
+					],
+					"variable": [
+						{
+							"key": "product_id",
+							"value": "prod_"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Review",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "{{api_key_header}}",
+						"value": "{{publishable_api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{api_url}}/store/reviews/:review_id",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"store",
+						"reviews",
+						":review_id"
+					],
+					"variable": [
+						{
+							"key": "review_id",
+							"value": "rev_"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "api_url",
+			"value": "http://localhost:9000",
+			"type": "string"
+		},
+		{
+			"key": "publishable_api_key",
+			"value": "pk_",
+			"type": "string"
+		},
+		{
+			"key": "api_key_header",
+			"value": "x-publishable-api-key",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "Bearer XYZ",
+			"type": "string"
+		}
+	]
+}

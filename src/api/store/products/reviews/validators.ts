@@ -7,21 +7,12 @@ export const ListReviewsQuerySchema = z.object({
     }
     return val;
   }, z.array(z.string()).optional()),
-  my_reviews_only: z.preprocess(
-    (val) => val === "true",
-    z.boolean().optional()
-  ),
-  verified_purchase_only: z.preprocess(
-    (val) => val === "true",
-    z.boolean().optional()
-  ),
+  my_reviews_only: z.coerce.boolean().optional(),
+  verified_purchase_only: z.coerce.boolean().optional(),
+  include_product: z.coerce.boolean().optional(),
   rating: z.preprocess(
-    (val) => (val !== undefined ? Number(val) : undefined),
+    (val) => (val !== undefined ? Math.round(Number(val)) : undefined),
     z.number().min(1).max(5).optional()
-  ),
-  include_product: z.preprocess(
-    (val) => val === "true",
-    z.boolean().optional()
   ),
   sort_by: z.string().optional(),
 });

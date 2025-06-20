@@ -1,30 +1,24 @@
-import type {
-  AuthenticatedMedusaRequest,
-  MedusaResponse,
-} from "@medusajs/framework/http";
+import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { DIGITAL_OCEAN_STORAGE_MODULE } from "../../../modules/do-storage";
 import DigitalOceanStorageModuleService from "../../../modules/do-storage/service";
 import { CreateReviewInput } from "./validators";
 import { Review } from "./types";
 import ReviewModuleService from "../../../modules/review/service";
 import { REVIEW_MODULE } from "../../../modules/review";
+import { MedusaError } from "@medusajs/framework/utils";
 
 //-----Create Review-----//
 
-export const POST = async (
-  req: AuthenticatedMedusaRequest<CreateReviewInput>,
-  res: MedusaResponse<Review>
-) => {
+export const POST = async (req: AuthenticatedMedusaRequest<CreateReviewInput>, res: MedusaResponse<Review>) => {
+  const logger = req.scope.resolve("logger");
+
   const { image_base64s, ...input } = req.validatedBody;
   const customer_id = req.auth_context?.actor_id;
 
-  const storageModuleService =
-    req.scope.resolve<DigitalOceanStorageModuleService>(
-      DIGITAL_OCEAN_STORAGE_MODULE
-    );
+  const storageModuleService = req.scope.resolve<DigitalOceanStorageModuleService>(DIGITAL_OCEAN_STORAGE_MODULE);
 
-  const reviewModuleService =
-    req.scope.resolve<ReviewModuleService>(REVIEW_MODULE);
+  const reviewModuleService = req.scope.resolve<ReviewModuleService>(REVIEW_MODULE);
+  const options = reviewModuleService._options;
 
   try {
     const query = req.scope.resolve("query");
@@ -49,11 +43,7 @@ export const POST = async (
       },
     });
 
-    // console.log("Orders for customer:", orders);
-
-    const hasOrderedProduct = orders.some((order) =>
-      order.items.some((item) => item.product_id === input.product_id)
-    );
+    const hasOrderedProduct = orders.some((order) => order.items.some((item) => item.product_id === input.product_id));
 
     // const uploadRes = input.image_base64s
     //   ? await storageModuleService.upload({
@@ -61,6 +51,27 @@ export const POST = async (
     //       productId: input.product_id,
     //     })
     //   : [];
+
+    if (!hasOrderedProduct && options.allowOnlyVerifiedPurchases) {
+      throw new MedusaError(MedusaError.Types.UNAUTHORIZED, "You can only review products you have purchased.");
+    }
+
+    if (!options.allowMultipleReviewsPerProduct) {
+      const existingReview = await reviewModuleService.listReviews(
+        {},
+        {
+          filters: {
+            product_id: input.product_id,
+            customer_id,
+            status: "approved",
+          },
+        }
+      );
+
+      if (existingReview) {
+        throw new MedusaError(MedusaError.Types.UNAUTHORIZED, "You have already submitted a review for this product.");
+      }
+    }
 
     const created_review = await reviewModuleService.createReviews({
       ...input,
@@ -71,13 +82,13 @@ export const POST = async (
       // image_urls: uploadRes.map((res) => res.url),
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       ...created_review,
       customer,
     });
   } catch (error) {
-    console.log("Error creating review:", error);
+    logger.error("Error creating review:", error);
 
-    res.status(500).end();
+    return res.status(500).end();
   }
 };
