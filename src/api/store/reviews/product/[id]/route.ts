@@ -2,24 +2,27 @@ import {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework";
-import { ListReviewsQuery } from "./validators";
-import { PaginatedOutput, Review } from "../../reviews/types";
+import { AggregateCounts, PaginatedOutput, Review } from "../../types";
+import ReviewModuleService from "../../../../../modules/review/service";
+import { REVIEW_MODULE } from "../../../../../modules/review";
 import {
   getPagination,
   reviewProductDefaultFields,
-} from "../../../../utils/utils";
-import ReviewModuleService from "../../../../modules/review/service";
-import { REVIEW_MODULE } from "../../../../modules/review";
+} from "../../../../../utils/utils";
+import { ListProductReviewsQuery } from "./validators";
+
+export interface ListProductReviewsOutput
+  extends PaginatedOutput<Omit<Review, "product">>,
+    AggregateCounts {}
 
 export const GET = async (
-  req: AuthenticatedMedusaRequest<any, ListReviewsQuery>,
-  res: MedusaResponse<PaginatedOutput<Review>>
+  req: AuthenticatedMedusaRequest<any, ListProductReviewsQuery>,
+  res: MedusaResponse<ListProductReviewsOutput>
 ) => {
   const {
     fields: extra_fields,
     include_product,
     my_reviews_only,
-    product_ids,
     rating,
     verified_purchase_only,
     limit,
@@ -28,6 +31,7 @@ export const GET = async (
     sort_by,
   } = req.validatedQuery;
 
+  const product_id = req.params.id;
   const customer_id = req.auth_context?.actor_id;
 
   const reviewModuleService =
@@ -44,8 +48,7 @@ export const GET = async (
         ...req.queryConfig.fields,
       ],
       filters: {
-        ...(product_ids &&
-          product_ids.length > 0 && { product_id: product_ids }),
+        product_id,
         ...(verified_purchase_only && { is_verified_purchase: true }),
         ...(my_reviews_only && customer_id && { customer_id }),
         ...(rating && { rating }),
@@ -59,34 +62,15 @@ export const GET = async (
       },
     });
 
-    const unique_product_ids = [...new Set(reviews.map((r) => r.product_id))];
-
-    const aggregate_rating_results = await Promise.all(
-      unique_product_ids.map((id) => reviewModuleService.getRatingAggregate(id))
-    );
-
-    const ratings_map = new Map(
-      aggregate_rating_results.map((result) => [result.product_id, result])
-    );
-
-    const enriched_reviews = reviews.map((review) => {
-      const { product_id, ...aggregatedCount } =
-        ratings_map.get(review.product_id) || {};
-
-      return {
-        ...review,
-        product: {
-          ...review.product,
-          ...aggregatedCount,
-        },
-      };
-    });
+    const { product_id: id, ...rating_results } =
+      await reviewModuleService.getRatingAggregate(product_id);
 
     return res.status(200).json({
-      data: enriched_reviews,
+      data: reviews,
       take: metadata?.take || 5,
       skip: metadata?.skip || 0,
       ...getPagination(metadata!),
+      ...rating_results,
     });
   } catch (error) {
     console.log("Error fetching reviews:", error);

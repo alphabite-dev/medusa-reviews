@@ -6,55 +6,116 @@ import {
 import Review from "./models/review";
 import { Context } from "@medusajs/framework/types";
 import { EntityManager } from "@mikro-orm/knex";
+import { AggregateCounts } from "../../api/store/reviews/types";
 
 class ReviewModuleService extends MedusaService({
   Review,
 }) {
+  // @InjectManager()
+  // async getRatingAggregate(
+  //   productId: string,
+  //   @MedusaContext() sharedContext?: Context<EntityManager>
+  // ): Promise<{ average: number; counts: { rating: number; count: number }[] }> {
+  //   const response = await sharedContext?.manager?.execute(
+  //     `WITH approved_reviews AS (
+  //       SELECT rating
+  //       FROM review
+  //       WHERE product_id = '${productId}' AND status = 'approved'
+  //     ),
+  //     all_ratings AS (
+  //       SELECT 1 AS rating UNION ALL
+  //       SELECT 2 UNION ALL
+  //       SELECT 3 UNION ALL
+  //       SELECT 4 UNION ALL
+  //       SELECT 5
+  //     ),
+  //     counts_per_rating AS (
+  //       SELECT rating, COUNT(*) as count
+  //       FROM approved_reviews
+  //       GROUP BY rating
+  //     )
+
+  //     SELECT
+  //       (SELECT AVG(rating) FROM approved_reviews) as average,
+  //       all_ratings.rating,
+  //       COALESCE(counts_per_rating.count, 0) as count
+  //     FROM all_ratings
+  //     LEFT JOIN counts_per_rating ON all_ratings.rating = counts_per_rating.rating
+  //     ORDER BY all_ratings.rating DESC`
+  //   );
+
+  //   const result = {
+  //     average: parseFloat(parseFloat(response?.[0]?.average ?? 0).toFixed(2)),
+  //     counts:
+  //       response?.map(
+  //         (row: { average: number; rating: number; count: string }) => ({
+  //           rating: row.rating,
+  //           count: Number(row.count),
+  //           product_id: productId,
+  //         })
+  //       ) ?? [],
+  //   };
+
+  //   console.log(result);
+
+  //   return result;
+  // }
+
   @InjectManager()
   async getRatingAggregate(
     productId: string,
     @MedusaContext() sharedContext?: Context<EntityManager>
-  ): Promise<{ average: number; counts: { rating: number; count: number }[] }> {
+  ): Promise<AggregateCounts> {
+    // const test = await sharedContext?.manager?.
+
     const response = await sharedContext?.manager?.execute(
       `WITH approved_reviews AS (
-        SELECT rating
-        FROM review
-        WHERE product_id = '${productId}' AND status = 'approved'
-      ),
-      all_ratings AS (
-        SELECT 1 AS rating UNION ALL
-        SELECT 2 UNION ALL
-        SELECT 3 UNION ALL
-        SELECT 4 UNION ALL
-        SELECT 5
-      ),
-      counts_per_rating AS (
-        SELECT rating, COUNT(*) as count
-        FROM approved_reviews
-        GROUP BY rating
-      )
+      SELECT rating
+      FROM review
+      WHERE product_id = '${productId}' AND status = 'approved'
+    ),
+    all_ratings AS (
+      SELECT 1 AS rating UNION ALL
+      SELECT 2 UNION ALL
+      SELECT 3 UNION ALL
+      SELECT 4 UNION ALL
+      SELECT 5
+    ),
+    counts_per_rating AS (
+      SELECT rating, COUNT(*) as count
+      FROM approved_reviews
+      GROUP BY rating
+    ),
+    total_count AS (
+      SELECT COUNT(*) as total
+      FROM approved_reviews
+    )
 
-      SELECT 
-        (SELECT AVG(rating) FROM approved_reviews) as average,
-        all_ratings.rating,
-        COALESCE(counts_per_rating.count, 0) as count
-      FROM all_ratings
-      LEFT JOIN counts_per_rating ON all_ratings.rating = counts_per_rating.rating
-      ORDER BY all_ratings.rating DESC`
+    SELECT
+      (SELECT AVG(rating) FROM approved_reviews) as average,
+      (SELECT total FROM total_count) as total_count,
+      all_ratings.rating,
+      COALESCE(counts_per_rating.count, 0) as count
+    FROM all_ratings
+    LEFT JOIN counts_per_rating ON all_ratings.rating = counts_per_rating.rating
+    ORDER BY all_ratings.rating DESC`
     );
 
-    const result = {
-      average: parseFloat(parseFloat(response?.[0]?.average ?? 0).toFixed(2)),
-      counts:
-        response?.map(
-          (row: { average: number; rating: number; count: string }) => ({
-            rating: row.rating,
-            count: Number(row.count),
-          })
-        ) ?? [],
-    };
+    // console.log("Rating Aggregate Response:", response);
 
-    return result;
+    const average = Number((response?.[0]?.average || 0).toFixed(2));
+    const total_count = Number(response?.[0]?.total_count || 0);
+    const counts = response!.map((row) => ({
+      rating: row.rating,
+      count: Number(row.count),
+    }));
+
+    return {
+      average,
+      total_count,
+      product_id: productId,
+      counts,
+    };
   }
 
   @InjectManager()

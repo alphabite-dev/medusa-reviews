@@ -49,7 +49,7 @@ export const POST = async (
       },
     });
 
-    console.log("Orders for customer:", orders);
+    // console.log("Orders for customer:", orders);
 
     const hasOrderedProduct = orders.some((order) =>
       order.items.some((item) => item.product_id === input.product_id)

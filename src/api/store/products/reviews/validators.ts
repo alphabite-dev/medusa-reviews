@@ -23,6 +23,7 @@ export const ListReviewsQuerySchema = z.object({
     (val) => val === "true",
     z.boolean().optional()
   ),
+  sort_by: z.string().optional(),
 });
 
 export type ListReviewsQuery = z.infer<typeof ListReviewsQuerySchema>;

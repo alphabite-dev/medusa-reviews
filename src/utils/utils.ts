@@ -12,3 +12,9 @@ export const getPagination = ({
 
   return { count, nextPage, currentPage, prevPage, totalPages };
 };
+
+export const reviewProductDefaultFields = [
+  "product.title",
+  "product.handle",
+  "product.thumbnail",
+];

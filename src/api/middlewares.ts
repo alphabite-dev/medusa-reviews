@@ -4,13 +4,12 @@ import {
   validateAndTransformBody,
   validateAndTransformQuery,
 } from "@medusajs/framework/http";
-// import { PostStoreReviewSchema } from "./store/reviews/route";
 import { GetAdminReviewsSchema } from "./admin/reviews/route";
 import { PostAdminUpdateReviewsStatusSchema } from "./admin/reviews/status/route";
-import { GetStoreReviewsSchema } from "./store/products/[id]/reviews/route";
 import { CreateReviewInputSchema } from "./store/reviews/validators";
 import { ListReviewsQuerySchema } from "./store/products/reviews/validators";
 import { createFindParams } from "@medusajs/medusa/api/utils/validators";
+import { ListProductReviewsQuerySchema } from "./store/reviews/product/[id]/validators";
 
 export default defineMiddlewares({
   routes: [
@@ -24,7 +23,7 @@ export default defineMiddlewares({
         validateAndTransformBody(CreateReviewInputSchema),
       ],
     },
-    //----List product reviews-----//
+    //----List  reviews-----//
     {
       matcher: "/store/products/reviews",
       method: ["GET"],
@@ -35,9 +34,41 @@ export default defineMiddlewares({
         }),
         validateAndTransformQuery(
           createFindParams().extend(ListReviewsQuerySchema.shape),
-          { defaults: [], isList: true }
+          {
+            defaults: ["customer.first_name", "customer.last_name"],
+            isList: true,
+          }
         ),
       ],
+    },
+    //----List product reviews-----//
+    {
+      matcher: "/store/reviews/product/:id",
+      method: ["GET"],
+      middlewares: [
+        authenticate("customer", ["bearer"], {
+          allowUnauthenticated: true,
+          allowUnregistered: true,
+        }),
+        validateAndTransformQuery(
+          createFindParams().extend(ListProductReviewsQuerySchema.shape),
+          {
+            defaults: ["customer.first_name", "customer.last_name"],
+            isList: true,
+          }
+        ),
+      ],
+    },
+    //----Get Aggregate counts of product reviews-----//
+    {
+      matcher: "/store/reviews/product/:id/aggregate-counts",
+      method: ["GET"],
+    },
+    //----Delete product review-----//
+    {
+      matcher: "/store/reviews/:id",
+      method: ["DELETE"],
+      middlewares: [authenticate("customer", ["bearer"])],
     },
     //----Admin get reviews-----//
     {
@@ -67,25 +98,6 @@ export default defineMiddlewares({
       method: ["POST"],
       middlewares: [
         validateAndTransformBody(PostAdminUpdateReviewsStatusSchema),
-      ],
-    },
-    //----Admin list product reviews -----//
-    {
-      matcher: "/store/products/:id/reviews",
-      method: ["GET"],
-      middlewares: [
-        validateAndTransformQuery(GetStoreReviewsSchema, {
-          isList: true,
-          defaults: [
-            "id",
-            "rating",
-            "title",
-            "first_name",
-            "last_name",
-            "content",
-            "created_at",
-          ],
-        }),
       ],
     },
   ],

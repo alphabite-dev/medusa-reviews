@@ -7,7 +7,7 @@ import {
 export interface AggregateCounts {
   average: number;
   counts: { rating: number; count: number }[];
-  product_id: string;
+  product_id?: string;
   total_count: number;
 }
 
