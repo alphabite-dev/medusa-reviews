@@ -35,12 +35,12 @@
         },
         "rating": {
           "name": "rating",
-          "type": "real",
+          "type": "integer",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "float"
+          "mappedType": "integer"
         },
         "status": {
           "name": "status",
@@ -72,7 +72,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "text"
         },
         "image_urls": {
@@ -169,13 +169,7 @@
           "unique": true
         }
       ],
-      "checks": [
-        {
-          "name": "rating_range",
-          "expression": "rating >= 1 AND rating <= 5",
-          "definition": "check ((rating >= 1 AND rating <= 5))"
-        }
-      ],
+      "checks": [],
       "foreignKeys": {},
       "nativeEnums": {}
     }

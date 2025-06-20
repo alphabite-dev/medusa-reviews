@@ -3,7 +3,7 @@ import { DIGITAL_OCEAN_STORAGE_MODULE } from "../../../modules/do-storage";
 import DigitalOceanStorageModuleService from "../../../modules/do-storage/service";
 import { CreateReviewInput } from "./validators";
 import { Review } from "./types";
-import ReviewModuleService from "../../../modules/review/service";
+import ReviewModuleService, { PluginType, ReviewsPluginType } from "../../../modules/review/service";
 import { REVIEW_MODULE } from "../../../modules/review";
 import { MedusaError } from "@medusajs/framework/utils";
 
@@ -11,11 +11,16 @@ import { MedusaError } from "@medusajs/framework/utils";
 
 export const POST = async (req: AuthenticatedMedusaRequest<CreateReviewInput>, res: MedusaResponse<Review>) => {
   const logger = req.scope.resolve("logger");
+  const config = req.scope.resolve("configModule");
+
+  const reviewsPluginOptions = config.plugins.find(
+    (p: PluginType) => p.resolve === "@alphabite/medusa-reviews"
+  ) as ReviewsPluginType;
+
+  console.log(reviewsPluginOptions.options);
 
   const { image_base64s, ...input } = req.validatedBody;
   const customer_id = req.auth_context?.actor_id;
-
-  const storageModuleService = req.scope.resolve<DigitalOceanStorageModuleService>(DIGITAL_OCEAN_STORAGE_MODULE);
 
   const reviewModuleService = req.scope.resolve<ReviewModuleService>(REVIEW_MODULE);
   const options = reviewModuleService._options;
@@ -52,11 +57,11 @@ export const POST = async (req: AuthenticatedMedusaRequest<CreateReviewInput>, r
     //     })
     //   : [];
 
-    if (!hasOrderedProduct && options.allowOnlyVerifiedPurchases) {
+    if (!hasOrderedProduct && options?.allowOnlyVerifiedPurchases) {
       throw new MedusaError(MedusaError.Types.UNAUTHORIZED, "You can only review products you have purchased.");
     }
 
-    if (!options.allowMultipleReviewsPerProduct) {
+    if (!options?.allowMultipleReviewsPerProduct) {
       const existingReview = await reviewModuleService.listReviews(
         {},
         {
@@ -68,7 +73,7 @@ export const POST = async (req: AuthenticatedMedusaRequest<CreateReviewInput>, r
         }
       );
 
-      if (existingReview) {
+      if (existingReview?.length > 0) {
         throw new MedusaError(MedusaError.Types.UNAUTHORIZED, "You have already submitted a review for this product.");
       }
     }

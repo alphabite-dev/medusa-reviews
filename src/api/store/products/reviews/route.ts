@@ -32,7 +32,7 @@ export const GET = async (
     if (!include_product) {
       return res.status(200).json({
         data: reviews,
-        ...getPagination(metadata!),
+        ...getPagination(metadata),
       });
     }
 

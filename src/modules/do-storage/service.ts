@@ -1,7 +1,8 @@
-import { MedusaError } from "@medusajs/framework/utils";
+import { MedusaError, MedusaService } from "@medusajs/framework/utils";
 import { Logger } from "@medusajs/framework/types";
 import { ProviderFileResultDTO } from "@medusajs/types";
 import { PutObjectCommand, S3 } from "@aws-sdk/client-s3";
+import DoFile from "./models/do-file";
 
 type InjectedDependencies = {
   logger: Logger;
@@ -13,7 +14,7 @@ type Options = {
   region: string;
 };
 
-export default class DigitalOceanStorageModuleService {
+export default class DigitalOceanStorageModuleService extends MedusaService({ DoFile }) {
   protected logger: Logger;
   protected options: Options;
   protected s3Client: S3;
@@ -22,34 +23,25 @@ export default class DigitalOceanStorageModuleService {
 
   static validateOptions(options: Record<any, any>): void | never {
     if (!options.accessKeyId || !options.secretAccessKey) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "Missing required options for DigitalOcean Storage"
-      );
+      throw new MedusaError(MedusaError.Types.INVALID_DATA, "Missing required options for DigitalOcean Storage");
     }
   }
-  constructor({ logger }: InjectedDependencies, options: Options) {
-    this.logger = logger;
-    this.options = options;
+  // constructor({ logger }: InjectedDependencies, options: Options) {
+  //   this.logger = logger;
+  //   this.options = options;
 
-    this.s3Client = new S3({
-      endpoint: `https://${options.region}.digitaloceanspaces.com`,
-      region: options.region,
-      forcePathStyle: true,
-      credentials: {
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey,
-      },
-    });
-  }
+  //   this.s3Client = new S3({
+  //     endpoint: `https://${options.region}.digitaloceanspaces.com`,
+  //     region: options.region,
+  //     forcePathStyle: true,
+  //     credentials: {
+  //       accessKeyId: options.accessKeyId,
+  //       secretAccessKey: options.secretAccessKey,
+  //     },
+  //   });
+  // }
 
-  async upload({
-    base64s,
-    productId,
-  }: {
-    base64s: string[];
-    productId: string;
-  }): Promise<ProviderFileResultDTO[]> {
+  async upload({ base64s, productId }: { base64s: string[]; productId: string }): Promise<ProviderFileResultDTO[]> {
     const bucket = process.env.DO_STORAGE_BUCKET;
     const region = process.env.DO_STORAGE_REGION;
 
@@ -70,10 +62,7 @@ export default class DigitalOceanStorageModuleService {
       });
 
       if (!fileType.includes("image")) {
-        throw new MedusaError(
-          MedusaError.Types.INVALID_DATA,
-          `File type ${fileType} is not supported`
-        );
+        throw new MedusaError(MedusaError.Types.INVALID_DATA, `File type ${fileType} is not supported`);
       }
 
       const url = `https://${bucket}.${region}.digitaloceanspaces.com/${fileKey}`;

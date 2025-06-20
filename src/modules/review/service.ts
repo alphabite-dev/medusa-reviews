@@ -1,5 +1,5 @@
 import { InjectManager, MedusaService, MedusaContext, MedusaError } from "@medusajs/framework/utils";
-import Review from "./models/review";
+import Review, { Review as ReviewType } from "./models/review";
 import { Context } from "@medusajs/framework/types";
 import { EntityManager } from "@mikro-orm/knex";
 import { AggregateCounts } from "../../api/store/reviews/types";
@@ -11,6 +11,16 @@ const optionsSchema = z.object({
 });
 
 export type AlphabiteReviewsPluginOptions = z.infer<typeof optionsSchema>;
+
+export type PluginType = {
+  resolve: string;
+  options: {};
+};
+
+export type ReviewsPluginType = {
+  resolve: "@alphabite/medusa-reviews";
+  options: AlphabiteReviewsPluginOptions;
+};
 
 class ReviewModuleService extends MedusaService({
   Review,
@@ -37,49 +47,48 @@ class ReviewModuleService extends MedusaService({
     productId: string,
     @MedusaContext() sharedContext?: Context<EntityManager>
   ): Promise<AggregateCounts> {
-    // const test = await sharedContext?.manager?.
+    const { manager } = sharedContext || {};
 
-    const response = await sharedContext?.manager?.execute(
-      `WITH approved_reviews AS (
-      SELECT rating
-      FROM review
-      WHERE product_id = '${productId}' AND status = 'approved'
-    ),
-    all_ratings AS (
-      SELECT 1 AS rating UNION ALL
-      SELECT 2 UNION ALL
-      SELECT 3 UNION ALL
-      SELECT 4 UNION ALL
-      SELECT 5
-    ),
-    counts_per_rating AS (
-      SELECT rating, COUNT(*) as count
-      FROM approved_reviews
-      GROUP BY rating
-    ),
-    total_count AS (
-      SELECT COUNT(*) as total
-      FROM approved_reviews
-    )
+    const aggregate_counts = await manager?.transactional(async (manager) => {
+      const reviews = (await manager.findAll(Review, {
+        where: {
+          product_id: productId,
+          status: "approved",
+        },
+        // @ts-ignore
+        fields: ["rating"],
+      })) as ReviewType[];
 
-    SELECT
-      (SELECT AVG(rating) FROM approved_reviews) as average,
-      (SELECT total FROM total_count) as total_count,
-      all_ratings.rating,
-      COALESCE(counts_per_rating.count, 0) as count
-    FROM all_ratings
-    LEFT JOIN counts_per_rating ON all_ratings.rating = counts_per_rating.rating
-    ORDER BY all_ratings.rating DESC`
-    );
+      const total_count = reviews?.length;
+      const average =
+        total_count === 0 ? 0 : reviews.reduce((acc, review) => acc + (review?.rating || 0), 0) / total_count;
 
-    // console.log("Rating Aggregate Response:", response);
+      const counts = Array.from({ length: 5 }, (_, i) => {
+        const rating = i + 1;
+        const count = reviews.filter((review) => review.rating === rating).length;
 
-    const average = Number((response?.[0]?.average || 0).toFixed(2));
-    const total_count = Number(response?.[0]?.total_count || 0);
-    const counts = response!.map((row) => ({
-      rating: row.rating,
-      count: Number(row.count),
-    }));
+        return {
+          rating,
+          count,
+        };
+      }).sort((a, b) => b.rating - a.rating);
+
+      return {
+        total_count,
+        average: Number(average.toFixed(2)),
+        counts,
+      };
+    });
+
+    const average = Number((aggregate_counts?.average || 0).toFixed(2));
+    const total_count = Number(aggregate_counts?.total_count || 0);
+    const counts = aggregate_counts?.counts || [
+      { rating: 5, count: 0 },
+      { rating: 4, count: 0 },
+      { rating: 3, count: 0 },
+      { rating: 2, count: 0 },
+      { rating: 1, count: 0 },
+    ];
 
     return {
       average,
