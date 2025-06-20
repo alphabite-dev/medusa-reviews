@@ -1,43 +1,39 @@
+// src/workflows/create-review.ts
 import {
   createWorkflow,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk";
+import { fetchCustomerStep } from "./steps/fetch-customer";
+import { fetchOrdersStep } from "./steps/fetch-orders";
+import { checkOrderedProductStep } from "./steps/check-ordered-product";
 import { createReviewStep } from "./steps/create-review";
-import { useQueryGraphStep } from "@medusajs/medusa/core-flows";
+import { CreateReviewInput } from "../api/store/reviews/validators";
+import { Review } from "../api/store/reviews/types";
 
-type CreateReviewInput = {
-  title?: string;
-  content?: string;
-  rating: number;
-  product_id: string;
-  customer_id?: string;
-  first_name: string;
-  last_name: string;
-  status?: "pending" | "approved" | "rejected";
-  image_urls: string[];
-};
+export interface CreateReviewWorkflowInput extends CreateReviewInput {
+  customer_id: string;
+}
 
 export const createReviewWorkflow = createWorkflow(
   "create-review",
-  (input: CreateReviewInput) => {
-    // Check product exists
-    useQueryGraphStep({
-      entity: "product",
-      fields: ["id"],
-      filters: {
-        id: input.product_id,
-      },
-      options: {
-        throwIfKeyNotFound: true,
-      },
+  (input: CreateReviewWorkflowInput) => {
+    //----Get customer first & last name
+    const customer = fetchCustomerStep({ customer_id: input.customer_id });
+
+    //----Get orders for the customer
+    const orders = fetchOrdersStep({ customer_id: input.customer_id });
+
+    //----Check if the customer has ordered the product
+    const hasOrderedProduct = checkOrderedProductStep({
+      orders,
+      product_id: input.product_id,
+    });
+    //----Create the review
+    const created_review = createReviewStep({
+      is_verified_purchase: hasOrderedProduct as unknown as boolean,
+      ...input,
     });
 
-    // Create the review
-    // const review = createReviewStep(input);
-
-    // // @ts-ignore
-    // return new WorkflowResponse({
-    //   review,
-    // });
+    return new WorkflowResponse({ created_review, customer });
   }
 );
