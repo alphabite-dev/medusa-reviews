@@ -1,4 +1,9 @@
-import { InjectManager, MedusaService, MedusaContext, MedusaError } from "@medusajs/framework/utils";
+import {
+  InjectManager,
+  MedusaService,
+  MedusaContext,
+  MedusaError,
+} from "@medusajs/framework/utils";
 import Review, { Review as ReviewType } from "./models/review";
 import { Context } from "@medusajs/framework/types";
 import { EntityManager } from "@mikro-orm/knex";
@@ -27,7 +32,9 @@ class ReviewModuleService extends MedusaService({
 }) {
   public _options: AlphabiteReviewsPluginOptions;
 
-  static validateOptions(_options: AlphabiteReviewsPluginOptions): void | never {
+  static validateOptions(
+    _options: AlphabiteReviewsPluginOptions
+  ): void | never {
     const parsed = optionsSchema.safeParse(_options);
     if (!parsed.success) {
       throw new MedusaError(
@@ -61,11 +68,16 @@ class ReviewModuleService extends MedusaService({
 
       const total_count = reviews?.length;
       const average =
-        total_count === 0 ? 0 : reviews.reduce((acc, review) => acc + (review?.rating || 0), 0) / total_count;
+        total_count === 0
+          ? 0
+          : reviews.reduce((acc, review) => acc + (review?.rating || 0), 0) /
+            total_count;
 
       const counts = Array.from({ length: 5 }, (_, i) => {
         const rating = i + 1;
-        const count = reviews.filter((review) => review.rating === rating).length;
+        const count = reviews.filter(
+          (review) => review.rating === rating
+        ).length;
 
         return {
           rating,

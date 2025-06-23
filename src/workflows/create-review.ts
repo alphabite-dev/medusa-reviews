@@ -30,7 +30,7 @@ export const createReviewWorkflow = createWorkflow(
     });
     //----Create the review
     const created_review = createReviewStep({
-      is_verified_purchase: hasOrderedProduct as unknown as boolean,
+      is_verified_purchase: hasOrderedProduct.valueOf(),
       ...input,
     });
 
