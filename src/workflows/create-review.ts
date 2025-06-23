@@ -4,11 +4,10 @@ import {
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk";
 import { fetchCustomerStep } from "./steps/fetch-customer";
-import { fetchOrdersStep } from "./steps/fetch-orders";
 import { checkOrderedProductStep } from "./steps/check-ordered-product";
 import { createReviewStep } from "./steps/create-review";
 import { CreateReviewInput } from "../api/store/reviews/validators";
-import { Review } from "../api/store/reviews/types";
+import { canCreateReviewStep } from "./steps/can-create-review";
 
 export interface CreateReviewWorkflowInput extends CreateReviewInput {
   customer_id: string;
@@ -17,20 +16,21 @@ export interface CreateReviewWorkflowInput extends CreateReviewInput {
 export const createReviewWorkflow = createWorkflow(
   "create-review",
   (input: CreateReviewWorkflowInput) => {
-    //----Get customer first & last name
     const customer = fetchCustomerStep({ customer_id: input.customer_id });
 
-    //----Get orders for the customer
-    const orders = fetchOrdersStep({ customer_id: input.customer_id });
+    const is_verified_purchase = checkOrderedProductStep({
+      customer_id: input.customer_id,
+      product_id: input.product_id,
+    }).valueOf();
 
-    //----Check if the customer has ordered the product
-    const hasOrderedProduct = checkOrderedProductStep({
-      orders,
+    canCreateReviewStep({
+      is_verified_purchase,
+      customer_id: input.customer_id,
       product_id: input.product_id,
     });
-    //----Create the review
+
     const created_review = createReviewStep({
-      is_verified_purchase: hasOrderedProduct.valueOf(),
+      is_verified_purchase,
       ...input,
     });
 
