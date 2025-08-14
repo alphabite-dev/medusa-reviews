@@ -26,11 +26,9 @@ export const canCreateReviewStep = createStep(
 
     if (!options?.allowMultipleReviewsPerProduct) {
       const existingReview = await reviewModuleService.listReviews({
-        filters: {
-          product_id: input.product_id,
-          customer_id: input.customer_id,
-          status: "approved",
-        },
+        product_id: input.product_id,
+        customer_id: input.customer_id,
+        status: "approved",
       });
 
       if (existingReview?.length > 0) {
