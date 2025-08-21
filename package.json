@@ -1,6 +1,6 @@
 {
   "name": "@alphabite/medusa-reviews",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Alphabite's Medusa Reviews Plugin",
   "author": "Alphabite (https://alphabite.io)",
   "license": "MIT",
@@ -36,7 +36,8 @@
     "prepublishOnly": "medusa plugin:build"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.802.0"
+    "@aws-sdk/client-s3": "^3.802.0",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "@medusajs/admin-sdk": "2.8.3",
@@ -52,6 +53,7 @@
     "@mikro-orm/migrations": "6.4.3",
     "@mikro-orm/postgresql": "6.4.3",
     "@swc/core": "1.5.7",
+    "@types/multer": "^2.0.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.2.25",

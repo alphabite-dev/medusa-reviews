@@ -10,6 +10,9 @@ import { CreateReviewInputSchema } from "./store/reviews/validators";
 import { ListReviewsQuerySchema } from "./store/products/reviews/validators";
 import { createFindParams } from "@medusajs/medusa/api/utils/validators";
 import { ListProductReviewsQuerySchema } from "./store/reviews/product/[id]/validators";
+import multer from "multer";
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 export default defineMiddlewares({
   routes: [
@@ -98,6 +101,15 @@ export default defineMiddlewares({
       method: ["POST"],
       middlewares: [
         validateAndTransformBody(PostAdminUpdateReviewsStatusSchema),
+      ],
+    },
+    {
+      matcher: "/store/reviews/files/images/upload",
+      method: "POST",
+      middlewares: [
+        // @ts-ignore
+        upload.array("files"),
+        authenticate("customer", ["bearer"]),
       ],
     },
   ],

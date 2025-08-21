@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "8da626bf-18c4-4003-bdf2-0bfd09e13034",
+		"_postman_id": "ea91379b-6cea-4c6b-a96e-9bc34990817c",
 		"name": "Alphabite Reviews",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "45926097"
+		"_exporter_id": "46528792"
 	},
 	"item": [
 		{
@@ -282,6 +282,51 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Upload Image Files",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "{{api_key_header}}",
+						"value": "{{publishable_api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{auth_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "files",
+							"type": "file",
+							"src": [
+								"/C:/Users/ibali/Pictures/images/icons/github-mark.png",
+								"/C:/Users/ibali/Pictures/images/icons/github-mark-white.png"
+							]
+						}
+					]
+				},
+				"url": {
+					"raw": "{{api_url}}/store/reviews/files/images/upload",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"store",
+						"reviews",
+						"files",
+						"images",
+						"upload"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -309,23 +354,19 @@
 	"variable": [
 		{
 			"key": "api_url",
-			"value": "http://localhost:9000",
-			"type": "string"
+			"value": "http://localhost:9000"
 		},
 		{
 			"key": "publishable_api_key",
-			"value": "pk_",
-			"type": "string"
+			"value": "pk_f8640ad5890e2eeb6844189f9966c27439b6e296df1a3ca9341f7276b5a67600"
 		},
 		{
 			"key": "api_key_header",
-			"value": "x-publishable-api-key",
-			"type": "string"
+			"value": "x-publishable-api-key"
 		},
 		{
 			"key": "auth_token",
-			"value": "Bearer XYZ",
-			"type": "string"
+			"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY3Rvcl9pZCI6InVzZXJfMDFKWkhSUks4WkZEQUFQS1BZMERBMFBXSlYiLCJhY3Rvcl90eXBlIjoidXNlciIsImF1dGhfaWRlbnRpdHlfaWQiOiJhdXRoaWRfMDFKWkhSUktCUjQ5QzROSE0xNFlBNzBNVlQiLCJhcHBfbWV0YWRhdGEiOnsidXNlcl9pZCI6InVzZXJfMDFKWkhSUks4WkZEQUFQS1BZMERBMFBXSlYifSwiaWF0IjoxNzU1NzY4MjkyLCJleHAiOjE3NTU4NTQ2OTJ9.Uu-IyI40YokPqsuItwIHPmcxVad-oYgTRx0kuIEzI84"
 		}
 	]
 }
