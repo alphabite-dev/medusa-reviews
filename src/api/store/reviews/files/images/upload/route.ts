@@ -19,8 +19,8 @@ export const POST = async (
 
   try {
     if (!files || files.length === 0) {
-      logger.error("Files not founded!");
-      return res.status(500).end();
+      logger.warn("Files not founded!");
+      return res.status(200).json([]);
     }
 
     const mappedFiles: MappedFile[] = files.map((f) => ({
