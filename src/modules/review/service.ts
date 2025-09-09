@@ -15,7 +15,21 @@ const optionsSchema = z.object({
   allowMultipleReviewsPerProduct: z.boolean().default(false),
 });
 
-export type AlphabiteReviewsPluginOptions = z.infer<typeof optionsSchema>;
+export type AlphabiteReviewsPluginOptionsType = z.infer<typeof optionsSchema>;
+
+export type AlphabiteReviewsPluginOptions = {
+  /**
+   * Whether only verified purchases are allowed to leave reviews.
+   * Default: false
+   */
+  allowOnlyVerifiedPurchases?: boolean;
+
+  /**
+   * Whether a customer can leave multiple reviews for the same product.
+   * Default: false
+   */
+  allowMultipleReviewsPerProduct?: boolean;
+};
 
 export type PluginType = {
   resolve: string;
@@ -24,16 +38,16 @@ export type PluginType = {
 
 export type ReviewsPluginType = {
   resolve: "@alphabite/medusa-reviews";
-  options: AlphabiteReviewsPluginOptions;
+  options: AlphabiteReviewsPluginOptionsType;
 };
 
 class ReviewModuleService extends MedusaService({
   Review,
 }) {
-  public _options: AlphabiteReviewsPluginOptions;
+  public _options: AlphabiteReviewsPluginOptionsType;
 
   static validateOptions(
-    _options: AlphabiteReviewsPluginOptions
+    _options: AlphabiteReviewsPluginOptionsType
   ): void | never {
     const parsed = optionsSchema.safeParse(_options);
     if (!parsed.success) {
@@ -44,7 +58,7 @@ class ReviewModuleService extends MedusaService({
     }
   }
 
-  constructor({}, options: AlphabiteReviewsPluginOptions) {
+  constructor({}, options: AlphabiteReviewsPluginOptionsType) {
     super(...arguments);
     this._options = options || {};
   }
