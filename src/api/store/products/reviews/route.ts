@@ -1,12 +1,12 @@
-import {
-  AuthenticatedMedusaRequest,
-  MedusaResponse,
-} from "@medusajs/framework";
+import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework";
 import { ListReviewsQuery } from "./validators";
 import { PaginatedOutput, Review } from "../../reviews/types";
 import {
   getPagination,
+  isNotNull,
+  REVIEW_DEFAULT_FIELDS,
   reviewProductDefaultFields,
+  sanitizeReview,
 } from "../../../../utils/utils";
 import ReviewModuleService from "../../../../modules/review/service";
 import { REVIEW_MODULE } from "../../../../modules/review";
@@ -15,30 +15,18 @@ export const GET = async (
   req: AuthenticatedMedusaRequest<any, ListReviewsQuery>,
   res: MedusaResponse<PaginatedOutput<Review>>
 ) => {
-  const {
-    fields,
-    include_product,
-    my_reviews_only,
-    product_ids,
-    rating,
-    verified_purchase_only,
-  } = req.validatedQuery;
+  const { fields, include_product, my_reviews_only, product_ids, rating, verified_purchase_only } = req.validatedQuery;
 
   const customer_id = req.auth_context?.actor_id;
 
-  const reviewModuleService =
-    req.scope.resolve<ReviewModuleService>(REVIEW_MODULE);
+  const reviewModuleService = req.scope.resolve<ReviewModuleService>(REVIEW_MODULE);
 
   try {
     const query = req.scope.resolve("query");
     const { data: reviews, metadata } = await query.graph({
       entity: "review",
       ...req.queryConfig.fields,
-      fields: [
-        "*",
-        ...(fields || []),
-        ...(include_product ? reviewProductDefaultFields : []),
-      ],
+      fields: [...REVIEW_DEFAULT_FIELDS, ...(fields || []), ...(include_product ? reviewProductDefaultFields : [])],
       filters: {
         ...((product_ids?.length || 0) > 0 && { product_id: product_ids }),
         ...(verified_purchase_only && { is_verified_purchase: true }),
@@ -47,35 +35,35 @@ export const GET = async (
       },
     });
 
+    const sanitizedReviews = reviews.map(sanitizeReview);
+
     if (!include_product) {
       return res.status(200).json({
-        data: reviews,
+        data: sanitizedReviews,
         ...getPagination(metadata),
       });
     }
 
-    const unique_product_ids = [...new Set(reviews.map((r) => r.product_id))];
+    const unique_product_ids = [...new Set(sanitizedReviews.map((r) => r.product_id))];
 
     const aggregate_rating_results = await Promise.all(
       unique_product_ids.map((id) => reviewModuleService.getRatingAggregate(id))
     );
 
-    const ratings_map = new Map(
-      aggregate_rating_results.map((result) => [result.product_id, result])
-    );
+    const ratings_map = new Map(aggregate_rating_results.map((result) => [result.product_id, result]));
 
-    const enriched_reviews = reviews.map((review) => {
-      const { product_id, ...aggregatedCount } =
-        ratings_map.get(review.product_id) || {};
+    const enriched_reviews = sanitizedReviews
+      .map((review) => {
+        const { product_id, ...aggregatedCount } = ratings_map.get(review.product_id) || {};
 
-      return {
-        ...review,
-        product: {
-          ...review.product,
-          ...aggregatedCount,
-        },
-      };
-    });
+        if (!review.product) return null;
+
+        return {
+          ...review,
+          product: { ...review.product, ...aggregatedCount },
+        };
+      })
+      .filter(isNotNull);
 
     return res.status(200).json({
       data: enriched_reviews,

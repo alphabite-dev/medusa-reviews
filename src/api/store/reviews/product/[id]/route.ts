@@ -2,7 +2,12 @@ import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework"
 import { AggregateCounts, PaginatedOutput, Review } from "../../types";
 import ReviewModuleService from "../../../../../modules/review/service";
 import { REVIEW_MODULE } from "../../../../../modules/review";
-import { getPagination, reviewProductDefaultFields } from "../../../../../utils/utils";
+import {
+  getPagination,
+  REVIEW_DEFAULT_FIELDS,
+  reviewProductDefaultFields,
+  sanitizeReview,
+} from "../../../../../utils/utils";
 import { ListProductReviewsQuery } from "./validators";
 
 export interface ListProductReviewsOutput extends PaginatedOutput<Omit<Review, "product">>, Partial<AggregateCounts> {}
@@ -27,7 +32,7 @@ export const GET = async (
       entity: "review",
       ...req.queryConfig,
       fields: [
-        "*",
+        ...REVIEW_DEFAULT_FIELDS,
         ...(fields || []),
         ...(include_product ? reviewProductDefaultFields : []),
         ...req.queryConfig.fields,
@@ -40,18 +45,20 @@ export const GET = async (
       },
     });
 
+    const sanitizedReviews = reviews.map(sanitizeReview);
+
     if (include_aggregated_counts) {
       const { product_id: _, ...aggregate_counts_result } = await reviewModuleService.getRatingAggregate(product_id);
 
       return res.status(200).json({
-        data: reviews,
+        data: sanitizedReviews,
         ...getPagination(metadata!),
         ...aggregate_counts_result,
       });
     }
 
     return res.status(200).json({
-      data: reviews,
+      data: sanitizedReviews,
       ...getPagination(metadata!),
     });
   } catch (error) {
