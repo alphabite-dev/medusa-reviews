@@ -1,18 +1,78 @@
 import {
-  defineMiddlewares,
   authenticate,
+  defineMiddlewares,
   validateAndTransformBody,
   validateAndTransformQuery,
 } from "@medusajs/framework/http";
+import type {
+  MedusaNextFunction,
+  MedusaRequest,
+  MedusaResponse,
+} from "@medusajs/framework/http";
+import { createFindParams } from "@medusajs/medusa/api/utils/validators";
+import multer from "multer";
 import { GetAdminReviewsSchema } from "./admin/reviews/route";
 import { PostAdminUpdateReviewsStatusSchema } from "./admin/reviews/status/route";
-import { CreateReviewInputSchema } from "./store/reviews/validators";
 import { ListReviewsQuerySchema } from "./store/products/reviews/validators";
-import { createFindParams } from "@medusajs/medusa/api/utils/validators";
 import { ListProductReviewsQuerySchema } from "./store/reviews/product/[id]/validators";
-import multer from "multer";
+import { CreateReviewInputSchema } from "./store/reviews/validators";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILES = 5;
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+    files: MAX_FILES,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          `Invalid file type: ${file.mimetype}. Only JPEG, PNG, WebP, and GIF are allowed.`,
+        ),
+      );
+    }
+  },
+});
+
+// Simple IP-based rate limiter for upload endpoint
+const uploadRateLimit = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX = 10; // max 10 upload requests per window
+
+const rateLimitUpload = (
+  req: MedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction,
+) => {
+  const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+  const now = Date.now();
+  const entry = uploadRateLimit.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    uploadRateLimit.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return next();
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return res
+      .status(429)
+      .json({ message: "Too many upload requests. Please try again later." });
+  }
+
+  entry.count++;
+  return next();
+};
 
 export default defineMiddlewares({
   routes: [
@@ -40,7 +100,7 @@ export default defineMiddlewares({
           {
             defaults: ["customer.first_name", "customer.last_name"],
             isList: true,
-          }
+          },
         ),
       ],
     },
@@ -58,7 +118,7 @@ export default defineMiddlewares({
           {
             defaults: ["customer.first_name", "customer.last_name"],
             isList: true,
-          }
+          },
         ),
       ],
     },
@@ -106,10 +166,15 @@ export default defineMiddlewares({
     {
       matcher: "/store/reviews/files/images/upload",
       method: "POST",
+      bodyParser: false,
       middlewares: [
+        rateLimitUpload,
         // @ts-ignore
-        upload.array("files"),
-        authenticate("customer", ["bearer"]),
+        upload.array("files", MAX_FILES),
+        authenticate("customer", ["bearer"], {
+          allowUnauthenticated: true,
+          allowUnregistered: true,
+        }),
       ],
     },
   ],
