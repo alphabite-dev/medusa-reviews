@@ -13,6 +13,7 @@ import { z } from "zod";
 const optionsSchema = z.object({
   allowOnlyVerifiedPurchases: z.boolean().default(false),
   allowMultipleReviewsPerProduct: z.boolean().default(false),
+  allowGuestReviews: z.boolean().default(false),
 });
 
 export type AlphabiteReviewsPluginOptionsType = z.infer<typeof optionsSchema>;
@@ -29,6 +30,12 @@ export type AlphabiteReviewsPluginOptions = {
    * Default: false
    */
   allowMultipleReviewsPerProduct?: boolean;
+
+  /**
+   * Whether unauthenticated (guest) users can create reviews and upload images.
+   * Default: false
+   */
+  allowGuestReviews?: boolean;
 };
 
 export type PluginType = {
@@ -47,13 +54,13 @@ class ReviewModuleService extends MedusaService({
   public _options: AlphabiteReviewsPluginOptionsType;
 
   static validateOptions(
-    _options: AlphabiteReviewsPluginOptionsType
+    _options: AlphabiteReviewsPluginOptionsType,
   ): void | never {
     const parsed = optionsSchema.safeParse(_options);
     if (!parsed.success) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
-        `Invalid options provided for WishlistModuleService: ${parsed.error.message}`
+        `Invalid options provided for WishlistModuleService: ${parsed.error.message}`,
       );
     }
   }
@@ -66,7 +73,7 @@ class ReviewModuleService extends MedusaService({
   @InjectManager()
   async getRatingAggregate(
     productId: string,
-    @MedusaContext() sharedContext?: Context<EntityManager>
+    @MedusaContext() sharedContext?: Context<EntityManager>,
   ): Promise<AggregateCounts> {
     const { manager } = sharedContext || {};
 
@@ -90,7 +97,7 @@ class ReviewModuleService extends MedusaService({
       const counts = Array.from({ length: 5 }, (_, i) => {
         const rating = i + 1;
         const count = reviews.filter(
-          (review) => review.rating === rating
+          (review) => review.rating === rating,
         ).length;
 
         return {

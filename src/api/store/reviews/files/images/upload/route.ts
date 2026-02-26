@@ -12,7 +12,7 @@ export interface MappedFile {
 
 export const POST = async (
   req: MedusaMulterFileUploadRequest,
-  res: MedusaResponse<FileDTO[]>
+  res: MedusaResponse<FileDTO[]>,
 ) => {
   const logger = req.scope.resolve("logger");
   const files = req.files;
@@ -26,7 +26,7 @@ export const POST = async (
     const mappedFiles: MappedFile[] = files.map((f) => ({
       filename: f.originalname,
       mimeType: f.mimetype,
-      content: f.buffer.toString("binary"),
+      content: f.buffer.toString("base64"),
       access: "public",
     }));
 

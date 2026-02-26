@@ -74,6 +74,29 @@ const rateLimitUpload = (
   return next();
 };
 
+// Middleware that checks allowGuestReviews option from the review module
+const guestAuthGuard = (
+  req: MedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction,
+) => {
+  const reviewService = req.scope.resolve("review") as {
+    _options?: { allowGuestReviews?: boolean };
+  };
+  const allowGuest = reviewService?._options?.allowGuestReviews ?? false;
+
+  if (allowGuest) {
+    // Still attempt auth but don't require it
+    return authenticate("customer", ["session", "bearer"], {
+      allowUnauthenticated: true,
+      allowUnregistered: true,
+    })(req, res, next);
+  }
+
+  // Require auth
+  return authenticate("customer", ["session", "bearer"])(req, res, next);
+};
+
 export default defineMiddlewares({
   routes: [
     //----Create review-----//
@@ -82,7 +105,7 @@ export default defineMiddlewares({
       method: ["POST"],
       bodyParser: { sizeLimit: "10mb" },
       middlewares: [
-        authenticate("customer", ["session", "bearer"]),
+        guestAuthGuard,
         validateAndTransformBody(CreateReviewInputSchema),
       ],
     },
@@ -171,10 +194,7 @@ export default defineMiddlewares({
         rateLimitUpload,
         // @ts-ignore
         upload.array("files", MAX_FILES),
-        authenticate("customer", ["bearer"], {
-          allowUnauthenticated: true,
-          allowUnregistered: true,
-        }),
+        guestAuthGuard,
       ],
     },
   ],
