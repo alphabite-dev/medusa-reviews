@@ -1,6 +1,10 @@
 {
   "name": "@alphabite/medusa-reviews",
+<<<<<<< HEAD
   "version": "0.5.0",
+=======
+  "version": "0.4.4",
+>>>>>>> b87853856e4f03be7f32b80a8544185862448730
   "description": "Alphabite's Medusa Reviews Plugin",
   "author": "Alphabite (https://alphabite.io)",
   "license": "MIT",
