@@ -1,19 +1,18 @@
+import { Context } from "@medusajs/framework/types";
 import {
   InjectManager,
-  MedusaService,
   MedusaContext,
   MedusaError,
+  MedusaService,
 } from "@medusajs/framework/utils";
-import Review, { Review as ReviewType } from "./models/review";
-import { Context } from "@medusajs/framework/types";
 import { EntityManager } from "@mikro-orm/knex";
-import { AggregateCounts } from "../../api/store/reviews/types";
 import { z } from "zod";
+import { AggregateCounts } from "../../api/store/reviews/types";
+import Review, { Review as ReviewType } from "./models/review";
 
 const optionsSchema = z.object({
   allowOnlyVerifiedPurchases: z.boolean().default(false),
   allowMultipleReviewsPerProduct: z.boolean().default(false),
-  allowGuestReviews: z.boolean().default(false),
 });
 
 export type AlphabiteReviewsPluginOptionsType = z.infer<typeof optionsSchema>;
@@ -30,12 +29,6 @@ export type AlphabiteReviewsPluginOptions = {
    * Default: false
    */
   allowMultipleReviewsPerProduct?: boolean;
-
-  /**
-   * Whether unauthenticated (guest) users can create reviews and upload images.
-   * Default: false
-   */
-  allowGuestReviews?: boolean;
 };
 
 export type PluginType = {
