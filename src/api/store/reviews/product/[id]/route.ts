@@ -1,14 +1,12 @@
 import { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework";
 import { AggregateCounts, PaginatedOutput, Review } from "../../types";
-import ReviewModuleService from "../../../../../modules/review/service";
-import { REVIEW_MODULE } from "../../../../../modules/review";
 import {
   getPagination,
   REVIEW_DEFAULT_FIELDS,
   reviewProductDefaultFields,
-  sanitizeReview,
 } from "../../../../../utils/utils";
 import { ListProductReviewsQuery } from "./validators";
+import { listProductReviewsWorkflow } from "../../../../../workflows/list-product-reviews";
 
 export interface ListProductReviewsOutput extends PaginatedOutput<Omit<Review, "product">>, Partial<AggregateCounts> {}
 
@@ -16,21 +14,16 @@ export const GET = async (
   req: AuthenticatedMedusaRequest<any, ListProductReviewsQuery>,
   res: MedusaResponse<ListProductReviewsOutput>
 ) => {
-  const logger = req.scope.resolve("logger");
-
   const { fields, include_product, my_reviews_only, rating, verified_purchase_only, include_aggregated_counts } =
     req.validatedQuery;
 
   const product_id = req.params.id;
   const customer_id = req?.auth_context?.actor_id;
 
-  const reviewModuleService = req.scope.resolve<ReviewModuleService>(REVIEW_MODULE);
-
-  try {
-    const query = req.scope.resolve("query");
-    const { data: reviews, metadata } = await query.graph({
-      entity: "review",
-      ...req.queryConfig,
+  const { result } = await listProductReviewsWorkflow(req.scope).run({
+    input: {
+      product_id,
+      include_aggregated_counts,
       fields: [
         ...REVIEW_DEFAULT_FIELDS,
         ...(fields || []),
@@ -43,27 +36,15 @@ export const GET = async (
         ...(my_reviews_only && customer_id && { customer_id }),
         ...(rating && { rating }),
       },
-    });
+      queryConfig: req.queryConfig,
+    },
+  });
 
-    const sanitizedReviews = reviews.map(sanitizeReview);
+  const { reviews, metadata, ...aggregateFields } = result;
 
-    if (include_aggregated_counts) {
-      const { product_id: _, ...aggregate_counts_result } = await reviewModuleService.getRatingAggregate(product_id);
-
-      return res.status(200).json({
-        data: sanitizedReviews,
-        ...getPagination(metadata!),
-        ...aggregate_counts_result,
-      });
-    }
-
-    return res.status(200).json({
-      data: sanitizedReviews,
-      ...getPagination(metadata!),
-    });
-  } catch (error) {
-    logger.error("Error fetching reviews:", error);
-
-    return res.status(500).end();
-  }
+  return res.status(200).json({
+    data: reviews,
+    ...getPagination(metadata!),
+    ...aggregateFields,
+  });
 };
