@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@medusajs/framework/zod";
 import { ListReviewsQuerySchema } from "../../../products/reviews/validators";
 
 export const ListProductReviewsQuerySchema = ListReviewsQuerySchema.omit({
@@ -7,4 +7,6 @@ export const ListProductReviewsQuerySchema = ListReviewsQuerySchema.omit({
   include_aggregated_counts: z.coerce.boolean().optional(),
 });
 
-export type ListProductReviewsQuery = z.infer<typeof ListProductReviewsQuerySchema>;
+export type ListProductReviewsQuery = z.infer<
+  typeof ListProductReviewsQuerySchema
+>;

@@ -1,10 +1,10 @@
-import { z } from "zod";
+import { z } from "@medusajs/framework/zod";
 
 export const CreateReviewInputSchema = z.object({
   content: z.string(),
   rating: z.preprocess(
     (val) => (val !== undefined ? Math.round(Number(val)) : undefined),
-    z.number().min(1).max(5)
+    z.number().min(1).max(5),
   ),
   product_id: z.string(),
   image_urls: z.array(z.string()).default([]),

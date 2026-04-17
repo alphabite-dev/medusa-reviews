@@ -6,7 +6,7 @@ import {
   MedusaService,
 } from "@medusajs/framework/utils";
 import { EntityManager } from "@mikro-orm/knex";
-import { z } from "zod";
+import { z } from "@medusajs/framework/zod";
 import { AggregateCounts } from "../../api/store/reviews/types";
 import Review, { Review as ReviewType } from "./models/review";
 

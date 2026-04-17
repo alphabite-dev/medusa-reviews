@@ -34,7 +34,34 @@
 
 ## Compatibility
 
-This starter is compatible with versions >= 2.4.0 of `@medusajs/medusa`. 
+This starter is compatible with versions >= 2.4.0 of `@medusajs/medusa`.
+
+### Version Requirements
+
+Make sure to install the plugin version that matches your Medusa version:
+
+- **Medusa 2.13.0 and above** → use the **latest** version of the plugin.
+- **Medusa versions below 2.13.0** → use plugin version **0.6.1**.
+
+### Installation
+
+Install the latest version (Medusa >= 2.13.0):
+
+```bash
+yarn add @alphabite/medusa-reviews
+# or
+npm install @alphabite/medusa-reviews
+```
+
+Install a specific version (Medusa < 2.13.0):
+
+```bash
+yarn add @alphabite/medusa-reviews@0.6.1
+# or
+npm install @alphabite/medusa-reviews@0.6.1
+```
+
+After installing, follow the setup instructions below to register the plugin in your Medusa project.
 
 ## Getting Started
 

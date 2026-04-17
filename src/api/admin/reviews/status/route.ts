@@ -1,6 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { updateReviewWorkflow } from "../../../../workflows/update-review";
-import { z } from "zod";
+import { z } from "@medusajs/framework/zod";
 
 export const PostAdminUpdateReviewsStatusSchema = z.object({
   ids: z.array(z.string()),
@@ -9,7 +9,7 @@ export const PostAdminUpdateReviewsStatusSchema = z.object({
 
 export async function POST(
   req: MedusaRequest<z.infer<typeof PostAdminUpdateReviewsStatusSchema>>,
-  res: MedusaResponse
+  res: MedusaResponse,
 ) {
   const { ids, status } = req.validatedBody;
 

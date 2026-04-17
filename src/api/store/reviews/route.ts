@@ -11,7 +11,7 @@ import { createReviewWorkflow } from "../../../workflows/create-review";
 
 export const POST = async (
   req: AuthenticatedMedusaRequest<CreateReviewInput>,
-  res: MedusaResponse<Review>
+  res: MedusaResponse<Review>,
 ) => {
   const logger = req.scope.resolve("logger");
   const customer_id = req.auth_context?.actor_id;
@@ -31,7 +31,7 @@ export const POST = async (
       customer,
     });
   } catch (error) {
-    logger.error("Error creating review:", error);
+    logger.error(`Error creating review:${JSON.stringify(error)}`);
 
     return res.status(500).end();
   }

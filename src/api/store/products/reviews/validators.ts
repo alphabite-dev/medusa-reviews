@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@medusajs/framework/zod";
 
 export const ListReviewsQuerySchema = z.object({
   product_ids: z.preprocess((val) => {
@@ -12,7 +12,7 @@ export const ListReviewsQuerySchema = z.object({
   include_product: z.coerce.boolean().optional(),
   rating: z.preprocess(
     (val) => (val !== undefined ? Math.round(Number(val)) : undefined),
-    z.number().min(1).max(5).optional()
+    z.number().min(1).max(5).optional(),
   ),
   sort_by: z.string().optional(),
 });
