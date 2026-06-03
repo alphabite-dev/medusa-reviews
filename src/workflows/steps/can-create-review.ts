@@ -15,16 +15,18 @@ export const canCreateReviewStep = createStep(
     const reviewModuleService =
       container.resolve<ReviewModuleService>(REVIEW_MODULE);
 
-    const options = reviewModuleService._options;
+    // Editable settings (review_settings singleton) take precedence; they fall
+    // back to the plugin's configured `_options` until an admin saves settings.
+    const settings = await reviewModuleService.getSettings();
 
-    if (!input.is_verified_purchase && options?.allowOnlyVerifiedPurchases) {
+    if (!input.is_verified_purchase && settings.allow_only_verified_purchases) {
       throw new MedusaError(
         MedusaError.Types.UNAUTHORIZED,
         "You can only review products you have purchased."
       );
     }
 
-    if (!options?.allowMultipleReviewsPerProduct) {
+    if (!settings.allow_multiple_reviews_per_product) {
       const existingReview = await reviewModuleService.listReviews({
         product_id: input.product_id,
         customer_id: input.customer_id,
