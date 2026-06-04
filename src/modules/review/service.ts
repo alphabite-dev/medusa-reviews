@@ -265,15 +265,13 @@ class ReviewModuleService extends MedusaService({
       return n(row[0]?.c);
     };
 
-    const countUniqueReviewers = async (
-      lo: Date,
-      hi: Date,
-    ): Promise<number> => {
+    const countWithMedia = async (lo: Date, hi: Date): Promise<number> => {
       const row = (await knex("review")
         .where("created_at", ">=", lo)
         .andWhere("created_at", "<", hi)
         .whereNull("deleted_at")
-        .countDistinct("customer_id as c")) as { c: string }[];
+        .andWhereRaw("cardinality(image_urls) > 0")
+        .count("* as c")) as { c: string }[];
       return n(row[0]?.c);
     };
 
@@ -284,8 +282,8 @@ class ReviewModuleService extends MedusaService({
       prevAvg,
       verified,
       prevVerified,
-      reviewers,
-      prevReviewers,
+      withMedia,
+      prevWithMedia,
     ] = await Promise.all([
       statusCounts(from, to),
       statusCounts(prevFrom, prevTo),
@@ -293,8 +291,8 @@ class ReviewModuleService extends MedusaService({
       avgRating(prevFrom, prevTo),
       countVerified(from, to),
       countVerified(prevFrom, prevTo),
-      countUniqueReviewers(from, to),
-      countUniqueReviewers(prevFrom, prevTo),
+      countWithMedia(from, to),
+      countWithMedia(prevFrom, prevTo),
     ]);
 
     const total = status.approved + status.pending + status.rejected;
@@ -320,10 +318,10 @@ class ReviewModuleService extends MedusaService({
       count: distMap.get(rating) ?? 0,
     }));
 
-    // Trend — total + approved per bucket. Group/order by the SELECT ordinal:
+    // Trend — total reviews per bucket. Group/order by the SELECT ordinal:
     // repeating date_trunc(?, ...) would bind a separate parameter that Postgres
     // does not treat as the same expression ("must appear in GROUP BY").
-    const totalTrendQb = knex("review")
+    const totalTrendRows = (await knex("review")
       .where("created_at", ">=", from)
       .andWhere("created_at", "<", to)
       .whereNull("deleted_at")
@@ -334,42 +332,9 @@ class ReviewModuleService extends MedusaService({
       )
       .count("* as count")
       .groupByRaw("1")
-      .orderByRaw("1");
+      .orderByRaw("1")) as { date: string; count: string }[];
 
-    const approvedTrendQb = knex("review")
-      .where("created_at", ">=", from)
-      .andWhere("created_at", "<", to)
-      .whereNull("deleted_at")
-      .andWhere("status", "approved")
-      .select(
-        knex.raw("to_char(date_trunc(?, created_at), 'YYYY-MM-DD') as date", [
-          bucket,
-        ]),
-      )
-      .count("* as count")
-      .groupByRaw("1")
-      .orderByRaw("1");
-
-    const [totalTrendRows, approvedTrendRows] = (await Promise.all([
-      totalTrendQb,
-      approvedTrendQb,
-    ])) as [
-      { date: string; count: string }[],
-      { date: string; count: string }[],
-    ];
-
-    const trendMap = new Map<string, { total: number; approved: number }>();
-    for (const r of totalTrendRows) {
-      trendMap.set(r.date, { total: n(r.count), approved: 0 });
-    }
-    for (const r of approvedTrendRows) {
-      const e = trendMap.get(r.date) ?? { total: 0, approved: 0 };
-      e.approved = n(r.count);
-      trendMap.set(r.date, e);
-    }
-    const trend = [...trendMap.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, v]) => ({ date, total: v.total, approved: v.approved }));
+    const trend = totalTrendRows.map((r) => ({ date: r.date, total: n(r.count) }));
 
     // Top products by review count (with mean rating) for the period.
     const topRows = (await knex("review")
@@ -394,7 +359,7 @@ class ReviewModuleService extends MedusaService({
         average_rating: mkDelta(avg, prevAvg),
         approval_rate: mkDelta(rate, prevRate),
         verified_purchases: mkDelta(verified, prevVerified),
-        unique_reviewers: mkDelta(reviewers, prevReviewers),
+        reviews_with_media: mkDelta(withMedia, prevWithMedia),
       },
       status_breakdown: status,
       rating_distribution,

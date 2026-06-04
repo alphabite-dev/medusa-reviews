@@ -13,11 +13,11 @@ type AnalyticsResponse = {
     average_rating: Delta;
     approval_rate: Delta;
     verified_purchases: Delta;
-    unique_reviewers: Delta;
+    reviews_with_media: Delta;
   };
   status_breakdown: { approved: number; pending: number; rejected: number };
   rating_distribution: Array<{ rating: number; count: number }>;
-  trend: Array<{ date: string; total: number; approved: number }>;
+  trend: Array<{ date: string; total: number }>;
   top_products: Array<{
     product_id: string;
     title: string;
@@ -170,9 +170,9 @@ export const ReviewAnalyticsTab = () => {
               delta={data.kpis.verified_purchases.delta_pct}
             />
             <KpiCard
-              label="Unique reviewers"
-              value={String(data.kpis.unique_reviewers.value)}
-              delta={data.kpis.unique_reviewers.delta_pct}
+              label="Reviews with media"
+              value={String(data.kpis.reviews_with_media.value)}
+              delta={data.kpis.reviews_with_media.delta_pct}
             />
           </div>
 
@@ -209,21 +209,14 @@ export const ReviewAnalyticsTab = () => {
                 <div
                   key={t.date}
                   className="flex min-w-[10px] flex-1 flex-col items-center justify-end gap-0.5"
-                  title={`${t.date}: ${t.total} reviews, ${t.approved} approved`}
+                  title={`${t.date}: ${t.total} reviews`}
                 >
-                  <div className="flex h-32 w-full items-end justify-center gap-0.5">
+                  <div className="flex h-32 w-full items-end justify-center">
                     <div
-                      className="w-1/2 rounded-t bg-ui-fg-interactive"
+                      className="w-full rounded-t bg-ui-fg-interactive"
                       style={{
                         height: `${(t.total / maxTrend) * 100}%`,
                         minHeight: t.total > 0 ? "2px" : undefined,
-                      }}
-                    />
-                    <div
-                      className="w-1/2 rounded-t bg-ui-fg-muted"
-                      style={{
-                        height: `${(t.approved / maxTrend) * 100}%`,
-                        minHeight: t.approved > 0 ? "2px" : undefined,
                       }}
                     />
                   </div>
@@ -233,9 +226,6 @@ export const ReviewAnalyticsTab = () => {
             <div className="flex gap-4">
               <Text size="xsmall" className="text-ui-fg-subtle">
                 ▮ Total
-              </Text>
-              <Text size="xsmall" className="text-ui-fg-muted">
-                ▮ Approved
               </Text>
             </div>
           </div>

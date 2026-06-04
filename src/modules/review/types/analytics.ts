@@ -25,15 +25,15 @@ export type ReviewAnalyticsView = {
     approval_rate: Delta;
     /** Reviews created in the period that are verified purchases. */
     verified_purchases: Delta;
-    /** Distinct customers who left a review in the period. */
-    unique_reviewers: Delta;
+    /** Reviews created in the period that include at least one image. */
+    reviews_with_media: Delta;
   };
   /** Current status of reviews created within the period. */
   status_breakdown: { approved: number; pending: number; rejected: number };
   /** Submitted-rating histogram for the period, ordered 5★ → 1★. */
   rating_distribution: Array<{ rating: number; count: number }>;
-  /** Per-bucket counts (day if ≤60d span, else week). */
-  trend: Array<{ date: string; total: number; approved: number }>;
+  /** Per-bucket total review counts (day if ≤60d span, else week). */
+  trend: Array<{ date: string; total: number }>;
   top_products: Array<{
     product_id: string;
     review_count: number;
