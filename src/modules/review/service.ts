@@ -16,6 +16,7 @@ import type {
   ReviewAnalyticsView,
   Delta,
 } from "./types/analytics";
+import { pickTrendBucket, trendBuckets, TREND_SQL_FORMAT } from "./trend";
 
 const REVIEW_SETTINGS_SINGLETON_ID = "revs_singleton";
 
@@ -211,7 +212,7 @@ class ReviewModuleService extends MedusaService({
     const periodMs = to.getTime() - from.getTime();
     const prevFrom = new Date(from.getTime() - periodMs);
     const prevTo = from;
-    const bucket = periodMs <= 60 * DAY_MS ? "day" : "week";
+    const bucket = pickTrendBucket(periodMs);
 
     const mkDelta = (value: number, previous: number): Delta => ({
       value,
@@ -326,15 +327,25 @@ class ReviewModuleService extends MedusaService({
       .andWhere("created_at", "<", to)
       .whereNull("deleted_at")
       .select(
-        knex.raw("to_char(date_trunc(?, created_at), 'YYYY-MM-DD') as date", [
-          bucket,
-        ]),
+        // Truncate in UTC so the bucket label doesn't depend on the DB session
+        // timezone (it must match the JS zero-fill in `trendBuckets`).
+        knex.raw(
+          "to_char(date_trunc(?, created_at at time zone 'UTC'), ?) as date",
+          [bucket, TREND_SQL_FORMAT[bucket]],
+        ),
       )
       .count("* as count")
       .groupByRaw("1")
       .orderByRaw("1")) as { date: string; count: string }[];
 
-    const trend = totalTrendRows.map((r) => ({ date: r.date, total: n(r.count) }));
+    const totalTrendMap = new Map(
+      totalTrendRows.map((r) => [r.date, n(r.count)]),
+    );
+    // Zero-fill so the chart shows every bucket, not just buckets with activity.
+    const trend = trendBuckets(from, to, bucket).map((date) => ({
+      date,
+      total: totalTrendMap.get(date) ?? 0,
+    }));
 
     // Top products by review count (with mean rating) for the period.
     const topRows = (await knex("review")

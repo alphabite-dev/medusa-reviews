@@ -32,7 +32,7 @@ export type ReviewAnalyticsView = {
   status_breakdown: { approved: number; pending: number; rejected: number };
   /** Submitted-rating histogram for the period, ordered 5★ → 1★. */
   rating_distribution: Array<{ rating: number; count: number }>;
-  /** Per-bucket total review counts (day if ≤60d span, else week). */
+  /** Per-bucket total review counts, zero-filled (hour ≤2d span, day ≤60d, else week). */
   trend: Array<{ date: string; total: number }>;
   top_products: Array<{
     product_id: string;
